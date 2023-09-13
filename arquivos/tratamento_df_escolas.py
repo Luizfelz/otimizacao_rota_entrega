@@ -17,9 +17,22 @@ def tratamento_df_escolas():
     df_escolas['BAIRRO'][linha] = unidecode(df_escolas['BAIRRO'][linha])
     df_escolas['ENDERECO'][linha] = unidecode(df_escolas['ENDERECO'][linha])
 
+  tipos_logradouro = []
   for linha in range(df_escolas.shape[0]):
-    df_escolas['ENDERECO'][linha] = df_escolas['ENDERECO'][linha].replace('R.','RUA')
-    df_escolas['ENDERECO'][linha] = df_escolas['ENDERECO'][linha].replace('AV.','AVENIDA')
+    tipo_split = df_escolas.iloc[linha]['ENDERECO'].split()[0]
+    tipos_logradouro.append(tipo_split)
+
+  lista_tipos_unicos = []
+  for x in tipos_logradouro:
+    if x not in lista_tipos_unicos:
+      lista_tipos_unicos.append(x)
+
+  # valores da 'lista_tipos_unicos' adicionado no dicionário abaixo para que o replace seja feito no dataframe
+  tipos_unicos_dict = {'RUA':'RUA', 'R.':'RUA', 'PRACA':'PRACA', 'AVENIDA':'AVENIDA', 'AV.':'AVENIDA', 'AV':'AVENIDA', \
+                      'BOULEVARD':'BOULEVARD', 'PCA.':'PRACA', 'ESTR.':'ESTRADA', 'ESTRADA':'ESTRADA', 'CAMINHO':'CAMINHO'}
+  for linha in range(df_escolas.shape[0]):
+    tipo_temp = df_escolas['ENDERECO'][linha].split()[0]
+    df_escolas['ENDERECO'][linha] = df_escolas['ENDERECO'][linha].replace(tipo_temp,tipos_unicos_dict.get(tipo_temp))
 
   for linha in range(df_escolas.shape[0]):
     df_escolas['LATITUDE'][linha] = df_escolas['LATITUDE'][linha].replace(',','.')
@@ -84,9 +97,19 @@ def tratamento_df_escolas():
       numero = 'S/N'
       atribui_logradouro_e_numero_casa(linha, numero, endereco_split,df_escolas)
 
+  tipos_instituicao = []
+  for linha in range(df_escolas.shape[0]):
+    tipo_split = df_escolas.iloc[linha]['ESCOLAS_POSTOS'].split()[0]
+    tipos_instituicao.append(tipo_split)
+
+  lista_tipos_unicos_instituicao = []
+  for x in tipos_instituicao:
+    if x not in lista_tipos_unicos_instituicao:
+      lista_tipos_unicos_instituicao.append(x)
+
+  # valores da 'lista_tipos_unicos_instituicao' adicionados no dicionário abaixo, para que o replace seja feito no dataframe
   tipos_instituicao_abreviaturas = {'EM':'ESCOLA MUNICIPAL','E.M':'ESCOLA MUNICIPAL','E.M.':'ESCOLA MUNICIPAL',\
-                                    'EM.':'ESCOLA MUNICIPAL','CIEP':'CENTRO INTEGRADO DE EDUCACAO PUBLICA', \
-                                    'C.E.I.P.':'CENTRO INTEGRADO DE EDUCACAO PUBLICA'}
+                                    'EM.':'ESCOLA MUNICIPAL','CIEP':'CENTRO INTEGRADO DE EDUCACAO PUBLICA'}
   tipos_instituicao_completos = {'ESCOLA':'ESCOLA MUNICIPAL','COLEGIO':'COLEGIO MUNICIPAL', \
                                 'CENTRO':'CENTRO INTEGRADO DE EDUCACAO PUBLICA'}
   df_escolas['TIPO_INSTITUICAO'] = ''
