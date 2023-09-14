@@ -1,6 +1,7 @@
 import pandas as pd
 from unidecode import unidecode
 import warnings
+import re
 from arquivos.funcoes import atribui_logradouro_e_numero_casa, is_numerico_brasil, converte_para_numero
 
 def tratamento_df_escolas():
@@ -26,13 +27,25 @@ def tratamento_df_escolas():
   for x in tipos_logradouro:
     if x not in lista_tipos_unicos:
       lista_tipos_unicos.append(x)
+  
+  resultado = df_escolas[df_escolas['ENDERECO'].str.contains(r'\.')]
+  palavras_com_ponto_no_final = []
+  for index, row in resultado.iterrows():
+    palavras_encontradas = re.findall(r'\w+\.', row['ENDERECO'])
+    palavras_com_ponto_no_final.extend(palavras_encontradas)
 
-  # valores da 'lista_tipos_unicos' adicionado no dicionário abaixo para que o replace seja feito no dataframe
+  nomes_unicos_enderecos = []
+  for x in palavras_com_ponto_no_final:
+    if x not in nomes_unicos_enderecos:
+      nomes_unicos_enderecos.append(x)
+
+  # valores das listas 'lista_tipos_unicos' e 'nomes_unicos_enderecos' adicionados no dicionário abaixo para que o replace seja feito no dataframe
   tipos_unicos_dict = {'RUA':'RUA', 'R.':'RUA', 'PRACA':'PRACA', 'AVENIDA':'AVENIDA', 'AV.':'AVENIDA', 'AV':'AVENIDA', \
-                      'BOULEVARD':'BOULEVARD', 'PCA.':'PRACA', 'ESTR.':'ESTRADA', 'ESTRADA':'ESTRADA', 'CAMINHO':'CAMINHO'}
+                     'BOULEVARD':'BOULEVARD', 'PCA.':'PRACA', 'ESTR.':'ESTRADA', 'ESTRADA':'ESTRADA', 'CAMINHO':'CAMINHO', \
+                      'SEN.':'SENADOR', 'MAL.':'MARECHAL','ALM.':'ALAMEDA','ENG.':'ENGENHEIRO','SD.':'SOLDADO','CASTELO.':'CASTELO'}
   for linha in range(df_escolas.shape[0]):
-    tipo_temp = df_escolas['ENDERECO'][linha].split()[0]
-    df_escolas['ENDERECO'][linha] = df_escolas['ENDERECO'][linha].replace(tipo_temp,tipos_unicos_dict.get(tipo_temp))
+    for chave in tipos_unicos_dict.keys():
+      df_escolas['ENDERECO'][linha] = df_escolas['ENDERECO'][linha].replace(chave,tipos_unicos_dict.get(chave))
 
   for linha in range(df_escolas.shape[0]):
     df_escolas['LATITUDE'][linha] = df_escolas['LATITUDE'][linha].replace(',','.')
@@ -140,10 +153,14 @@ def tratamento_df_escolas():
         break
 
   for indice, linha in df_escolas.iterrows():
-      valor_original = linha['BAIRRO']
-      if '/' in valor_original:
-        valor_tratado = valor_original.split('/')[0]
-        df_escolas.at[indice, 'BAIRRO'] = valor_tratado
+    df_escolas.at[indice, 'BAIRRO'] = df_escolas.at[indice, 'BAIRRO'].replace('RECREIO','RECREIO DOS BANDEIRANTES', regex=True)
+    df_escolas.at[indice, 'BAIRRO'] = df_escolas.at[indice, 'BAIRRO'].replace('MARACANA/ VILA ISABEL','MARACANA', regex=True)
+    df_escolas.at[indice, 'BAIRRO'] = df_escolas.at[indice, 'BAIRRO'].replace('MARACANA/ TIJUCA','RECREIO DOS BANDEIRANTES', regex=True)
+    df_escolas.at[indice, 'BAIRRO'] = df_escolas.at[indice, 'BAIRRO'].replace('FREGUESIA JPA','FREGUESIA (JACAREPAGUA)', regex=True)
+    df_escolas.at[indice, 'BAIRRO'] = df_escolas.at[indice, 'BAIRRO'].replace('OSWALDO CRUZ','OSVALDO CRUZ', regex=True)
+    df_escolas.at[indice, 'BAIRRO'] = df_escolas.at[indice, 'BAIRRO'].replace('AUGUSTO VASCONCELOS','SENADOR VASCONCELOS', regex=True)
+    df_escolas.at[indice, 'BAIRRO'] = df_escolas.at[indice, 'BAIRRO'].replace('NOVA SEPETIBA','SEPETIBA', regex=True)
+    df_escolas.at[indice, 'BAIRRO'] = df_escolas.at[indice, 'BAIRRO'].replace('RIO DAS PEDRAS','JACAREPAGUA', regex=True)
 
   df_escolas.drop_duplicates(subset='ID_INSTITUICAO', inplace=True)
   df_escolas.reset_index(inplace=True, drop=True)
